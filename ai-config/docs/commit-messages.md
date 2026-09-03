@@ -18,8 +18,10 @@ tree is clean, do not create an empty commit.
 
 ## Writing the message
 
-- Subject line in imperative mood ("Add", "Fix", "Refactor" — not "Added",
-  "Fixes"), no trailing period, roughly 50 characters.
+- Subject line format: `type[subject] -- main changes for the module`, e.g.
+  `fix[auth] -- reject expired refresh tokens`. `type` is one of feat, fix,
+  refactor, docs, test, chore, etc. `subject` is the module/area affected.
+  The `-- main changes` part is a short imperative summary of what changed.
 - Favor explaining *why* the change was made over restating *what* changed —
   the diff already shows what changed.
 - Add a body when the subject alone isn't enough context: what changed, why,
@@ -38,3 +40,5 @@ tree is clean, do not create an empty commit.
 - Never skip hooks (`--no-verify`) or bypass signing unless explicitly asked.
 - Never force-push, reset --hard, or rewrite published history without
   explicit approval (see `safety.md`).
+- Never run `git push` unless explicitly told to. Committing is not the same
+  as being asked to push.

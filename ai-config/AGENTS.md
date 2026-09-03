@@ -64,12 +64,27 @@ is hard to reverse, or requirements are ambiguous. Skip it for small,
 obvious, single-file changes — a plan is a tool for alignment, not a
 deliverable to pad.
 
+## Research prior art first
+
+Before drafting the plan, search GitHub (issues, PRs, and existing
+implementations) for prior approaches to the same problem. Look for:
+
+- Existing libraries, tools, or reference implementations that solve it.
+- Issues or PRs where other developers hit problems with those approaches —
+  bugs, edge cases, performance traps, abandoned attempts.
+
+Use what's found to steer the approach and avoid known pitfalls. Fold
+relevant findings into the **Approach** and **Risks and rollback** sections
+below instead of listing them separately. Skip this step when the task has
+no meaningful prior art to find (e.g. project-specific logic with no public
+analogue) or when a plan itself is being skipped per above.
+
 A plan should cover:
 
 - **Goal** — what outcome is being asked for, in one or two sentences.
 - **Current behavior** — what exists today and why it doesn't satisfy the goal.
 - **Approach** — the chosen approach, and any alternatives considered and why
-  they were rejected.
+  they were rejected. Note relevant prior art and how it shaped the choice.
 - **Steps** — the concrete sequence of changes, in the order they'll happen.
 - **Affected files/systems** — what will be touched, including anything
   downstream (migrations, other services, config).
@@ -302,8 +317,10 @@ tree is clean, do not create an empty commit.
 
 ## Writing the message
 
-- Subject line in imperative mood ("Add", "Fix", "Refactor" — not "Added",
-  "Fixes"), no trailing period, roughly 50 characters.
+- Subject line format: `type[subject] -- main changes for the module`, e.g.
+  `fix[auth] -- reject expired refresh tokens`. `type` is one of feat, fix,
+  refactor, docs, test, chore, etc. `subject` is the module/area affected.
+  The `-- main changes` part is a short imperative summary of what changed.
 - Favor explaining *why* the change was made over restating *what* changed —
   the diff already shows what changed.
 - Add a body when the subject alone isn't enough context: what changed, why,
@@ -322,6 +339,8 @@ tree is clean, do not create an empty commit.
 - Never skip hooks (`--no-verify`) or bypass signing unless explicitly asked.
 - Never force-push, reset --hard, or rewrite published history without
   explicit approval (see `safety.md`).
+- Never run `git push` unless explicitly told to. Committing is not the same
+  as being asked to push.
 
 ---
 
