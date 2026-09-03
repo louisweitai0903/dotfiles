@@ -14,9 +14,11 @@ the single file every tool-specific config is a **symlink** to:
 | Tool          | Global config it reads      | Linked to  |
 |---------------|------------------------------|------------|
 | Claude Code   | `~/.claude/CLAUDE.md`        | `AGENTS.md` |
-| Codex CLI     | `~/.codex/AGENTS.md`         | `AGENTS.md` |
-| Gemini CLI    | `~/.gemini/GEMINI.md`        | `AGENTS.md` |
 | GitHub Copilot| `<project>/.github/copilot-instructions.md` (per-project only, no global slot) | `AGENTS.md`, via `link-copilot.sh` |
+
+Not currently wired up: Codex CLI, Gemini CLI (not in use). `AGENTS.md` is
+still a generic filename by convention — re-adding either tool later is just
+adding a `link` line back to `install.sh`.
 
 Because these are symlinks, not copies, rebuilding `AGENTS.md` instantly
 changes behavior for every tool on this machine — no per-tool syncing step

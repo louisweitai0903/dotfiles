@@ -17,10 +17,8 @@ link() {
 }
 
 link "$HOME/.claude/CLAUDE.md"
-link "$HOME/.codex/AGENTS.md"
-link "$HOME/.gemini/GEMINI.md"
 
 echo
-echo "Global instructions linked for Claude Code, Codex CLI, and Gemini CLI."
+echo "Global instructions linked for Claude Code."
 echo "For GitHub Copilot (per-project only), run:"
 echo "  $REPO_DIR/link-copilot.sh <path-to-project>"
