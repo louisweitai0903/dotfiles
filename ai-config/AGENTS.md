@@ -129,6 +129,21 @@ When writing code:
 - Follow existing project conventions.
 - Keep functions small and focused.
 
+## Shared logic
+
+If a function or module is used across multiple places (multiple modules,
+services, or repos), extract it into its own reusable module, package,
+function, or microservice — callable globally — rather than copying or
+rewriting the logic at each call site. Apply this once real reuse exists;
+don't pre-extract for hypothetical future callers (see "avoid unnecessary
+abstractions" above).
+
+## Full-stack applications
+
+When asked to create a full-stack application, containerize it with Docker
+(a `Dockerfile` per service, plus `docker-compose` for multi-service local
+orchestration) rather than relying on ad hoc local setup.
+
 ---
 
 # Database Migration Standards
@@ -446,6 +461,17 @@ Priority order:
 2. Existing integration tests
 3. Existing end-to-end tests
 4. Manual verification
+
+## Test folder structure
+
+- Every module or function must have a corresponding test folder/file
+  (following the project's existing test layout convention, e.g. `tests/`,
+  `__tests__/`, `*_test.go` alongside the source, etc.).
+- As a module gains more functions, its test folder grows alongside it —
+  each new function gets its own test coverage rather than being left
+  untested or bolted onto an unrelated test file.
+- A task is not done until its new/changed tests pass. Do not mark a task
+  complete with failing or skipped tests — fix the code or the test first.
 
 Before considering a task complete:
 
