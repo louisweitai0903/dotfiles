@@ -10,7 +10,9 @@
 6. Verify functionality.
 7. Review diff.
 8. Update documentation.
-9. Commit.
+9. Run the fresh-session feature review and write its review file (see
+   `feature-review.md`).
+10. Commit.
 
 Never commit unnecessary generated files. Only create a checkpoint commit
 when there are actual staged or unstaged changes to preserve; if the working
@@ -35,8 +37,9 @@ tree is clean, do not create an empty commit.
 
 ## When to commit
 
-- Only commit when explicitly asked to. Making changes is not the same as
-  being asked to commit them.
+- Always commit when a feature or bug fix is complete — validated, documented,
+  and reviewed per `feature-review.md`. Don't wait to be asked, and don't
+  commit work in progress or half-finished features.
 - Never skip hooks (`--no-verify`) or bypass signing unless explicitly asked.
 - Never force-push, reset --hard, or rewrite published history without
   explicit approval (see `safety.md`).

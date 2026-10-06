@@ -15,9 +15,11 @@ ORDER=(
   execution-plan.md
   scope-control.md
   implementation-standards.md
+  frontend-references.md
   database-migrations.md
   dependencies.md
   documentation-standards.md
+  feature-review.md
   commit-messages.md
   code-review.md
   security-review.md

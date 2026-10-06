@@ -10,4 +10,7 @@ A task is complete only when:
 - Documentation is updated.
 - Scope has not expanded unnecessarily.
 - Validation has been completed and documented.
+- A fresh-session review file exists for the feature/fix (see
+  `feature-review.md`).
+- The feature/fix is committed.
 - No destructive actions were performed without approval.

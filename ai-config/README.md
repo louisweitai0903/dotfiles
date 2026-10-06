@@ -34,9 +34,11 @@ needed locally.
 | `execution-plan.md` | When and how to write a plan before implementing |
 | `scope-control.md` | Keeping changes to what was actually asked |
 | `implementation-standards.md` | Code quality expectations |
+| `frontend-references.md` | Research design references and wait for a choice before building UI |
 | `database-migrations.md` | Migration safety rules |
 | `dependencies.md` | Rules for adding/upgrading packages |
 | `documentation-standards.md` | README/STATUS/PROGRESS/HANDOFF/docs conventions |
+| `feature-review.md` | Fresh-session review + review file required before each commit |
 | `commit-messages.md` | Commit message format and git workflow |
 | `code-review.md` | Review checklist, for others' code and self-review |
 | `security-review.md` | Security checklist (injection, authz, secrets, etc) |
