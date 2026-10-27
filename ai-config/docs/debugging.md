@@ -8,6 +8,7 @@
   things and hoping.
 - Fix the root cause, not the symptom. If only a workaround is possible,
   say so and explain why.
-- Add a regression test that would have caught the bug, when practical.
+- Add a regression test that fails without the fix and passes with it (see
+  `goal-driven-execution.md`). If one truly can't be written, say why.
 - Verify the fix resolves the original repro and doesn't break related
   behavior.

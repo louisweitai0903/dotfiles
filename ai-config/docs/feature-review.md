@@ -44,7 +44,8 @@ before the PR. It must contain:
   what changed in each.
 - **What was fixed** — for bug fixes: the root cause, the symptom, and how
   the fix addresses the cause. For features: any bugs found and fixed
-  along the way.
+  along the way. Name the regression test that covers each one
+  (see `goal-driven-execution.md`), or why none could be written.
 - **Coverage** — the scenarios, inputs, and user flows this change now
   handles, and the tests that prove each one.
 - **Edge cases** — edge cases considered, how each is handled, and any
