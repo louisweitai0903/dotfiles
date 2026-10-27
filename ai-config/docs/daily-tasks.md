@@ -43,18 +43,18 @@ finished. "Nothing finished yet." until then.>
 ## Tasks
 - [ ] <short description>
 - [x] <short description> — done HH:MM
-  - Changes: <what changed and why, key files, commit short SHAs>
+  - Changes: <what changed and why, key files, commit short SHAs, PR link>
 ```
 
 ## Marking an item done
 
 An item is done when its work meets the Definition of Done, which includes
-being committed if it involves code. So mark it after the work's commit,
-when the SHAs exist:
+a draft PR if it involves code. So mark it once the PR is open, when the
+SHAs and PR link exist:
 
 1. Tick it (`- [x]`) and append `— done HH:MM`.
 2. Add a `Changes:` line under it with a one-line summary of what changed,
-   the key files, and the commit short SHAs.
+   the key files, the commit short SHAs, and the PR link.
 3. Rewrite the `## Summary` section to cover everything done so far today.
 
 ## Rules
