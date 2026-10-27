@@ -14,6 +14,7 @@ ORDER=(
   before-starting.md
   daily-tasks.md
   execution-plan.md
+  goal-driven-execution.md
   scope-control.md
   implementation-standards.md
   frontend-references.md

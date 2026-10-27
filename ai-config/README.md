@@ -98,6 +98,7 @@ restart Claude Code.
 | `before-starting.md` | What to understand before writing any code |
 | `daily-tasks.md` | Read/create the project's `docs/tasks/YYYY-MM-DD.md` at session start (local-only, like handoffs); mark items done with their changes and keep a daily summary; `/handoff` links to it |
 | `execution-plan.md` | When and how to write a plan before implementing |
+| `goal-driven-execution.md` | Turn each task into a checkable goal, loop until it passes, add a regression test for every error caught, report only evidence |
 | `scope-control.md` | Keeping changes to what was actually asked |
 | `implementation-standards.md` | Code quality expectations |
 | `frontend-references.md` | Research design references and wait for a choice before building UI |
