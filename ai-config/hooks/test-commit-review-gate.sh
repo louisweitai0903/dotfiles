@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Tests for commit-review-gate.sh: feeds hook JSON for each scenario against a
-# throwaway git repo and checks the allow/deny decision. Exits non-zero on any
-# failure. Usage: ./hooks/test-commit-review-gate.sh
+# Tests for commit-review-gate.sh: feeds hook JSON for each scenario against
+# throwaway git repos and checks the allow/deny decision. Exits non-zero on
+# any failure. Usage: ./hooks/test-commit-review-gate.sh
 set -uo pipefail
 
 HOOK="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/commit-review-gate.sh"
@@ -10,7 +10,9 @@ trap 'rm -rf "$TMP"' EXIT
 export COMMIT_REVIEW_GATE_LOG="$TMP/gate.log"
 R="$TMP/repo"
 OUT="$TMP/notrepo"
-mkdir -p "$R" "$OUT"
+U="$TMP/unborn"
+ORIGIN="$TMP/origin.git"
+mkdir -p "$R" "$OUT" "$U"
 failures=0
 
 # check <description> <cwd> <command> <allow|deny>
@@ -28,124 +30,128 @@ check() {
 
 g() { git -C "$R" "$@"; }
 
-g init -q && g config user.email test@example.com && g config user.name test
+g init -q && g symbolic-ref HEAD refs/heads/main
+g config user.email test@example.com && g config user.name test
 echo a >"$R/app.py" && g add . && g commit -qm init
+git init -q --bare "$ORIGIN" && g remote add origin "$ORIGIN" && g push -q origin main && g remote set-head origin main
 
-# Not a commit
+# Neither a commit nor a PR
 check "non-commit command" "$R" "ls -la" allow
 check "git add alone" "$R" "git add app.py" allow
 check "git commit-tree" "$R" "git commit-tree abc" allow
 check "git log --grep commit" "$R" "git log --grep commit" allow
 check "echo mentioning git commit" "$R" 'echo "run git commit later"' allow
 check "grep for git commit -m" "$R" "grep -rn 'git commit -m' docs" allow
-
-# Nothing staged
-check "nothing staged" "$R" "git commit -m x" deny
-check "message-only amend" "$R" "git commit --amend -m x" allow
-check "allow-empty" "$R" "git commit --allow-empty -m x" allow
-check "pathspec, nothing staged" "$R" "git commit app.py -m x" deny
+check "gh pr list" "$R" "gh pr list" allow
+check "echo mentioning gh pr create" "$R" 'echo "then gh pr create"' allow
 check "outside any repo" "$OUT" "git commit -m x" allow
 
-# Code staged, no review
+# Commits on protected branches are denied
 echo b >>"$R/app.py" && g add app.py
-check "staged code, no review" "$R" "git commit -m 'fix a bug'" deny
-check "plain git commit, no review" "$R" "git commit" deny
-check "git commit;" "$R" "git commit;" deny
-check "git commit && git push" "$R" "git commit && git push" deny
-check "-C plain commit from outside" "$OUT" "git -C $R commit" deny
-check "git -C text in message" "$R" "git commit -m 'see git -C /tmp'" deny
+check "commit on main" "$R" "git commit -m x" deny
+check "plain git commit on main" "$R" "git commit" deny
+check "-C commit on main from outside" "$OUT" "git -C $R commit -m x" deny
+check "-C quoted path on main" "$OUT" "git -C '$R' commit -m x" deny
+check "cd && commit on main" "$OUT" "cd $R && git commit -m x" deny
+check "git -c option on main" "$R" "git -c core.editor=true commit -m x" deny
+check "/usr/bin/git commit on main" "$R" "/usr/bin/git commit -m x" deny
+check "--git-dir X commit on main" "$R" "git --git-dir .git commit -m x" deny
+check "amend on main" "$R" "git commit --amend --no-edit" deny
+check "docs-only commit on main" "$R" "git commit -m 'docs only'" deny
 check "-C with a variable path" "$OUT" 'git -C "$REPO" commit -m x' deny
-check "cd && commit" "$R" "cd $R && git commit -m x" deny
-check "git -c option" "$R" "git -c core.editor=true commit -m x" deny
-check "amend adding code to unreviewed HEAD" "$R" "git commit --amend --no-edit" deny
-check "-C from another dir" "$OUT" "git -C $R commit -m x" deny
-check "-C quoted path" "$OUT" "git -C '$R' commit -m x" deny
-
-# Code + review staged
-mkdir -p "$R/docs/reviews" && echo r >"$R/docs/reviews/2026-01-01-x.md" && g add docs
-check "staged code + review" "$R" "git commit -m x" allow
-check "plain git commit + review" "$R" "git commit" allow
-check "-C quoted path + review" "$OUT" "git -C '$R' commit -m x" allow
-check "two quoted -C paths (ambiguous)" "$OUT" "git -C '$OUT' status && git -C '$R' commit -m x" deny
-check "cd <repo> && commit + review" "$OUT" "cd $R && git commit -m x" allow
-check "cd <non-repo> && commit" "$R" "cd $OUT && git commit -m x" deny
-check "cd quoted path && commit" "$OUT" "cd '$R' && git commit -m x" deny
 check "cd variable && commit" "$OUT" 'cd $REPO && git commit -m x' deny
-check "message mentions git add" "$R" "git commit -m 'docs -- explain why git add must run separately'" allow
-check "heredoc message mentions git rm" "$R" "$(printf 'git commit -m "$(cat <<%sEOF%s\nfix[x] -- y\n\nNever chain git rm or git add with commit.\nEOF\n)"' "'" "'")" allow
-check "unquoted heredoc message" "$R" "$(printf 'git commit -F - <<EOF\nfix[x] -- y\nEOF')" allow
-check "heredoc body with quoted phrase" "$R" "$(printf 'git commit -m "$(cat <<%sEOF%s\nfix: "a b" c\n\nsee "docs/x y" and git add notes\nEOF\n)"' "'" "'")" allow
-check "escaped quotes in -m" "$R" 'git commit -m "say \"hi\""' allow
-check "/usr/bin/git commit detected" "$R" "/usr/bin/git commit -m x app.py" deny
-check "--git-dir X commit detected" "$R" "git --git-dir .git commit -m x app.py" deny
-check "redirect after commit" "$R" "git commit -m x 2>&1" allow
-check "add && commit" "$R" "git add app.py && git commit -m x" deny
-check "-C add && -C commit" "$OUT" "git -C $R add . && git -C $R commit -m x" deny
-check "pathspec with review staged" "$R" "git commit -m x app.py" deny
-check "-- pathspec" "$R" "git commit -m x -- app.py" deny
-check "--only" "$R" "git commit -o -m x app.py" deny
-check "--include" "$R" "git commit -i app.py -m x" deny
-
-# Monorepo review location
-g reset -q docs && mkdir -p "$R/pkg/a/docs/reviews" && echo r >"$R/pkg/a/docs/reviews/2026-01-01-y.md" && g add pkg
-check "subproject review" "$R" "git commit -m x" allow
-g reset -q pkg && echo r >"$R/docs/reviews/2026-01-01-café.md" && g add "docs/reviews/2026-01-01-café.md"
-check "non-ASCII review filename" "$R" "git commit -m x" allow
-g rm -q --cached "docs/reviews/2026-01-01-café.md" && rm "$R/docs/reviews/2026-01-01-café.md"
-g add docs && g commit -qm reviewed
-
-# -a / --amend against a reviewed HEAD
-echo c >>"$R/app.py" && echo r2 >>"$R/docs/reviews/2026-01-01-x.md"
-check "-am with modified review" "$R" "git commit -am x" allow
-check "-a with modified review" "$R" "git commit -a -m x" allow
-g checkout -q docs/reviews/2026-01-01-x.md
-check "-a, review unchanged" "$R" "git commit -a -m x" deny
-check "-C with -am" "$OUT" "git -C $R commit -am x" deny
-echo r3 >>"$R/docs/reviews/2026-01-01-x.md" && g add app.py
-check "-la in message is not -a" "$R" "git commit -m '-la'" deny
-check "odd quote + -a in heredoc body" "$R" "$(printf 'git commit -m "$(cat <<%sEOF%s\nfix: "x -a\nEOF\n)"' "'" "'")" deny
-g checkout -q docs/reviews/2026-01-01-x.md
-check "amend adding code to reviewed HEAD" "$R" "git commit --amend --no-edit" allow
-g reset -q && g checkout -q . && g rm -q app.py
-check "delete-only, no review" "$R" "git commit -m x" deny
-g reset -q && g checkout -q . && echo d >>"$R/app.py" && g add app.py && g rm -q --cached docs/reviews/2026-01-01-x.md
-check "deleted review doesn't count" "$R" "git commit -m x" deny
-
-# Docs-only commits need no review
-g reset -q && g checkout -q .
-echo n >"$R/README.md" && mkdir -p "$R/guide" && echo n >"$R/guide/intro.MDX" && g add README.md guide
-check "docs-only (md, mdx)" "$R" "git commit -m x" allow
-echo n >"$R/LICENSE" && echo n >"$R/notes.txt" && echo n >"$R/CHANGELOG" && g add LICENSE notes.txt CHANGELOG
-check "docs-only (LICENSE, CHANGELOG, txt)" "$R" "git commit -m x" allow
-echo n >"$R/run.sh" && g add run.sh
-check "docs + code needs review" "$R" "git commit -m x" deny
-g reset -q run.sh && rm "$R/run.sh" && g commit -qm docs
-for code in lib/changes.py src/Notice.tsx license.js; do
-  mkdir -p "$R/$(dirname "$code")" && echo n >"$R/$code" && g add "$code"
-  check "doc-like name with code extension ($code)" "$R" "git commit -m x" deny
-  g rm -q --cached "$code" && rm "$R/$code"
+check "cd quoted path && commit" "$OUT" "cd '$R' && git commit -m x" deny
+check "cd <non-repo> && commit" "$R" "cd $OUT && git commit -m x" deny
+check "two quoted -C paths (ambiguous)" "$OUT" "git -C '$OUT' status && git -C '$R' commit -m x" deny
+for b in master dev staging; do
+  g switch -q -c "$b"
+  check "commit on $b" "$R" "git commit -m x" deny
+  g switch -q main && g branch -q -D "$b"
 done
-g rm -q --cached docs/reviews/2026-01-01-x.md
-check "deleting a doc is docs-only" "$R" "git commit -m x" allow
-g reset -q && g mv README.md README.rst
-check "renaming a doc is docs-only" "$R" "git commit -m x" allow
-g mv README.rst readme.py
-check "renaming a doc to code needs review" "$R" "git commit -m x" deny
-g mv readme.py README.md && echo e >>"$R/app.py" && echo e >>"$R/README.md" && g add README.md
-check "docs staged, -a adds code" "$R" "git commit -am x" deny
-check "docs staged, no -a" "$R" "git commit -m x" allow
-g reset -q && g checkout -q .
+
+# Initial commit in an unborn repo is allowed
+git -C "$U" init -q && git -C "$U" symbolic-ref HEAD refs/heads/main && echo a >"$U/a.py" && git -C "$U" add .
+check "initial commit on unborn main" "$U" "git commit -m init" allow
+
+# Switching branch in the same command can't be checked
+check "switch -c && commit" "$R" "git switch -c feat/y && git commit -m x" deny
+check "checkout && commit" "$R" "git checkout -b feat/y && git commit -m x" deny
+
+# Commits on feature branches are allowed, with no review
+g switch -q -c feat/x
+check "commit on feature branch" "$R" "git commit -m x" allow
+check "plain commit on feature branch" "$R" "git commit" allow
+check "-am on feature branch" "$R" "git commit -am x" allow
+check "pathspec on feature branch" "$R" "git commit -m x app.py" allow
+check "amend on feature branch" "$R" "git commit --amend --no-edit" allow
+check "add && commit on feature branch" "$R" "git add app.py && git commit -m x" allow
+check "-C quoted path on feature branch" "$OUT" "git -C '$R' commit -m x" allow
+check "cd <repo> && commit on feature branch" "$OUT" "cd $R && git commit -m x" allow
+check "message mentions git switch" "$R" "git commit -m 'feat: explain why git switch runs first'" allow
+check "heredoc message mentions git checkout" "$R" "$(printf 'git commit -m "$(cat <<%sEOF%s\nfeat(x): y\n\nNever chain git checkout with commit.\nEOF\n)"' "'" "'")" allow
+check "unquoted heredoc message" "$R" "$(printf 'git commit -F - <<EOF\nfeat(x): y\nEOF')" allow
+check "escaped quotes in -m" "$R" 'git commit -m "say \"hi\""' allow
+g switch -q -c main-fix
+check "branch named like main-fix" "$R" "git commit -m x" allow
+g switch -q feat/x && g branch -q -D main-fix
+g commit -qm "code change"
+
+# Detached HEAD is allowed
+g switch -q --detach
+check "commit on detached HEAD" "$R" "git commit -m x" allow
+g switch -q feat/x
+
+# PRs need a committed review file on the branch
+check "PR, no review" "$R" "gh pr create --draft --title x" deny
+check "PR, no review, --base main" "$R" "gh pr create --draft --base main" deny
+check "PR, no review, --base=main" "$R" "gh pr create --draft --base=main" deny
+check "PR, no review, -B main" "$R" "gh pr create -d -B main" deny
+check "/usr/bin/gh pr create, no review" "$R" "/usr/bin/gh pr create --draft" deny
+check "PR, quoted --base" "$R" "gh pr create --draft --base 'main'" deny
+check "PR, unknown --base" "$R" "gh pr create --draft --base nope" deny
+check "commit && PR in one command" "$R" "git commit -m x && gh pr create --draft" deny
+mkdir -p "$R/docs/reviews" && echo r >"$R/docs/reviews/2026-01-01-x.md" && g add docs
+check "PR, review staged but not committed" "$R" "gh pr create --draft" deny
+g commit -qm "review"
+check "PR, review committed" "$R" "gh pr create --draft --title x" allow
+check "PR, review committed, --base main" "$R" "gh pr create --draft --base main" allow
+check "cd <repo> && PR, review committed" "$OUT" "cd $R && gh pr create --draft" allow
+check "PR body mentions git commit" "$R" 'gh pr create --draft --body "run git commit first"' allow
+check "PR outside any repo" "$OUT" "gh pr create --draft" allow
+g remote set-head origin -d
+check "PR without origin/HEAD falls back to origin/main" "$R" "gh pr create --draft" allow
+g remote set-head origin main
+
+# A branch that deletes a review file and changes code is not reviewed
+g push -q origin feat/x:main && g switch -q -c feat/del
+g rm -q docs/reviews/2026-01-01-x.md && echo c >>"$R/app.py" && g add app.py && g commit -qm "del review"
+check "PR, deleted review doesn't count" "$R" "gh pr create --draft" deny
+
+# Subproject review location
+mkdir -p "$R/pkg/a/docs/reviews" && echo r >"$R/pkg/a/docs/reviews/2026-01-01-y.md" && g add pkg && g commit -qm sub
+check "PR, subproject review" "$R" "gh pr create --draft" allow
+
+# Docs-only branches need no review
+g switch -q main && g reset -q --hard origin/main && g switch -q -c docs/readme
+echo n >"$R/README.md" && echo n >"$R/LICENSE" && g add . && g commit -qm docs
+check "PR, docs-only branch" "$R" "gh pr create --draft" allow
+echo n >"$R/run.sh" && g add run.sh && g commit -qm code
+check "PR, docs + code branch" "$R" "gh pr create --draft" deny
+g switch -q main && g switch -q -c chore/none
+check "PR, no changes vs base" "$R" "gh pr create --draft" allow
 
 # Internal errors block instead of allowing (simulated with an unset variable)
 FAKE_HOOK="$TMP/broken-hook.sh"
 sed 's/^trap on_exit EXIT$/&; : "$UNSET_VAR_FOR_TEST"/' "$HOOK" >"$FAKE_HOOK"
 grep -q UNSET_VAR_FOR_TEST "$FAKE_HOOK" || echo "WARN  error injection didn't apply"
-rc=0
-jq -n --arg c "git commit -m x" --arg d "$R" '{tool_input: {command: $c}, cwd: $d}' | bash "$FAKE_HOOK" >/dev/null 2>&1 || rc=$?
-if [ "$rc" = 2 ]; then printf 'PASS  %s\n' "internal error exits 2 (blocks)"; else
-  printf 'FAIL  %s (exit %s)\n' "internal error exits 2 (blocks)" "$rc"
-  failures=$((failures + 1))
-fi
+for c in "git commit -m x" "gh pr create --draft"; do
+  rc=0
+  jq -n --arg c "$c" --arg d "$R" '{tool_input: {command: $c}, cwd: $d}' | bash "$FAKE_HOOK" >/dev/null 2>&1 || rc=$?
+  if [ "$rc" = 2 ]; then printf 'PASS  %s\n' "internal error exits 2 ($c)"; else
+    printf 'FAIL  %s (exit %s)\n' "internal error exits 2 ($c)" "$rc"
+    failures=$((failures + 1))
+  fi
+done
 
 echo
 if [ "$failures" -gt 0 ]; then
