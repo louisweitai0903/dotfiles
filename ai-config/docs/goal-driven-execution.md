@@ -20,10 +20,13 @@ inside the Execution Plan (see `execution-plan.md`).
 
 ## Every error caught becomes a test
 
-Any error found during the session — a bug being fixed, a failure hit
-while implementing, or a defect raised in review — gets a regression test
-that fails without the fix and passes with it. Future work then catches it
-before it ships. Add it in the same change as the fix. If a test truly
+Any behavioral defect found during the session gets a regression test
+that fails without the fix and passes with it. That covers a bug being
+fixed, a failure hit while implementing, and a defect raised in review.
+It means errors that could have shipped and that a test can observe, not
+typos, lint or compile errors caught while editing. The test makes future
+work catch the defect before it ships. Add it in the same change as the
+fix. If a test truly
 can't be written (e.g. it depends on an external service you can't fake),
 say so and explain why in the report and the review file.
 

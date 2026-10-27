@@ -29,7 +29,10 @@ diff as they are, not as anyone intended them to be.
    result. If you can't run them, say why.
 4. Check against the code-review and security-review checklists in your
    global instructions, and whether README/STATUS/PROGRESS/docs needed
-   updates for this change.
+   updates for this change. Every behavioral defect fixed in the change
+   needs a regression test that fails without the fix (see
+   `goal-driven-execution.md`). A fix with no such test and no stated
+   reason is a finding.
 5. Decide the verdict:
    - **BLOCK** — a confirmed defect in behavior this change claims to handle
      (wrong result, crash, data loss, security hole), failing tests, or
@@ -58,8 +61,10 @@ Return exactly two things, nothing else:
 - [path:line](../../path#Lline) — one line on what changed.
 
 ## What was fixed
-<Bug fixes: root cause, symptom, how the fix addresses the cause. Features:
-bugs found and fixed along the way, or "None.">
+<Bug fixes: root cause, symptom, how the fix addresses the cause, and the
+regression test that covers it (or why none could be written). Features:
+bugs found and fixed along the way, each with its regression test, or
+"None.">
 
 ## Coverage
 | Scenario / flow | Handled by | Proven by |
