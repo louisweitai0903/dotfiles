@@ -110,6 +110,7 @@ check "/usr/bin/gh pr create, no review" "$R" "/usr/bin/gh pr create --draft" de
 check "PR, quoted --base" "$R" "gh pr create --draft --base 'main'" deny
 check "PR, unknown --base" "$R" "gh pr create --draft --base nope" deny
 check "commit && PR in one command" "$R" "git commit -m x && gh pr create --draft" deny
+check "PR, not a draft" "$R" "gh pr create --base main" deny
 mkdir -p "$R/docs/reviews" && echo r >"$R/docs/reviews/2026-01-01-x.md" && g add docs
 check "PR, review staged but not committed" "$R" "gh pr create --draft" deny
 g commit -qm "review"
@@ -118,6 +119,13 @@ check "PR, review committed, --base main" "$R" "gh pr create --draft --base main
 check "cd <repo> && PR, review committed" "$OUT" "cd $R && gh pr create --draft" allow
 check "PR body mentions git commit" "$R" 'gh pr create --draft --body "run git commit first"' allow
 check "PR outside any repo" "$OUT" "gh pr create --draft" allow
+check "PR, review committed, -d" "$R" "gh pr create -d" allow
+check "PR, review committed, not a draft" "$R" "gh pr create --title x" deny
+check "PR, --head another branch" "$R" "gh pr create --draft --head feat/other" deny
+check "PR, -H another branch" "$R" "gh pr create --draft -H feat/other" deny
+check "PR, --head=another branch" "$R" "gh pr create --draft --head=feat/other" deny
+check "PR, --repo another repo" "$R" "gh pr create --draft --repo o/r" deny
+check "PR, -R another repo" "$R" "gh pr create --draft -R o/r" deny
 g remote set-head origin -d
 check "PR without origin/HEAD falls back to origin/main" "$R" "gh pr create --draft" allow
 g remote set-head origin main
@@ -126,6 +134,8 @@ g remote set-head origin main
 g push -q origin feat/x:main && g switch -q -c feat/del
 g rm -q docs/reviews/2026-01-01-x.md && echo c >>"$R/app.py" && g add app.py && g commit -qm "del review"
 check "PR, deleted review doesn't count" "$R" "gh pr create --draft" deny
+g reset -q --hard HEAD~1 && echo c >>"$R/app.py" && echo typo >>"$R/docs/reviews/2026-01-01-x.md" && g add . && g commit -qm "edit old review"
+check "PR, edited old review doesn't count" "$R" "gh pr create --draft" deny
 
 # Subproject review location
 mkdir -p "$R/pkg/a/docs/reviews" && echo r >"$R/pkg/a/docs/reviews/2026-01-01-y.md" && g add pkg && g commit -qm sub

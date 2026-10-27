@@ -44,7 +44,7 @@ if a rule changes, update the skill/agent that carries it out.
 | `/handoff [title]` | skill (`skills/handoff`) | Writes `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md` for the current session, updates the `HANDOFF.md` index, and ends with a one-line resume prompt to paste into a new session. Handoff files are local-only (added to `.git/info/exclude`, never committed). Manual only. |
 | `/commit-review [slug]` | skill (`skills/commit-review`) | Reviews the whole feature branch against its base in a fresh subagent, writes `docs/reviews/YYYY-MM-DD-<slug>.md` (coverage, edge cases, untested areas, done/not-done checklist, findings, PASS/BLOCK), commits it on the branch, then pushes and opens the draft PR. Only for branches that change code — docs-only branches skip it. |
 | `commit-reviewer` | subagent (`agents/commit-reviewer.md`) | The read-only, fresh-context reviewer `/commit-review` delegates to. |
-| `commit-review-gate.sh` | PreToolUse hook (`hooks/`) | Denies `git commit` on `main`/`master`/`dev`/`staging`, and `gh pr create` unless the branch has a committed `docs/reviews/*.md` file (at the repo root or in a subproject). Logs decisions to `~/.claude/logs/commit-review-gate.log`. |
+| `commit-review-gate.sh` | PreToolUse hook (`hooks/`) | Denies `git commit` on `main`/`master`/`dev`/`staging`, and `gh pr create` unless it's a draft for the current branch and the branch adds a committed `docs/reviews/*.md` file (at the repo root or in a subproject). Logs decisions to `~/.claude/logs/commit-review-gate.log`. |
 
 Gate rules:
 - Commits on `main`, `master`, `dev` or `staging` are denied (except the
@@ -55,7 +55,11 @@ Gate rules:
   because the hook runs before the switch and can't see which branch the
   commit lands on.
 - `gh pr create` is denied unless `git diff <base>...HEAD` contains a
-  committed (added or modified, not deleted) review file. The base is
+  review file the branch adds and has committed. Editing or deleting an
+  older review already on the base doesn't count.
+- `gh pr create` must be a draft (`--draft`/`-d`), and `--head`/`-H` and
+  `--repo`/`-R` are denied: the gate can only check the current branch of
+  the local repo. The base is
   `--base`/`-B`, else `origin/HEAD`, else `origin/main`, `origin/master`,
   `main`, `master`. A `--base` that's quoted, a variable, or doesn't exist
   is denied.

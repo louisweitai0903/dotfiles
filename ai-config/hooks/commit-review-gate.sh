@@ -3,8 +3,9 @@
 # docs/commit-messages.md and docs/feature-review.md):
 # - `git commit` is denied on a protected branch (PROTECTED_RE). On any other
 #   branch it's allowed; commits there need no review of their own.
-# - `gh pr create` is denied unless the branch, compared with its base,
-#   contains a committed review file (docs/reviews/*.md), produced by the
+# - `gh pr create` is denied unless it's a draft for the current branch
+#   (no --head/--repo) and the branch, compared with its base, adds a
+#   committed review file (docs/reviews/*.md), produced by the
 #   /commit-review skill. Docs-only branches (every changed path matches
 #   DOC_PATTERN) are exempt.
 #
@@ -172,7 +173,7 @@ fi
 after="$(sed -E "s#^.*${pr_create_re}##" <<<"$bare")"
 after="${after%%[;&|]*}"
 read -ra args <<<"$after"
-base="" skip=0
+base="" skip=0 draft=0
 # ${args[@]+...}: macOS bash 3.2 treats an empty array as unbound under set -u.
 for arg in ${args[@]+"${args[@]}"}; do
   if [ "$skip" = 1 ]; then
@@ -183,9 +184,18 @@ for arg in ${args[@]+"${args[@]}"}; do
   case "$arg" in
     --base | -B) skip=1 ;;
     --base=*) base="${arg#--base=}" ;;
+    --draft | -d) draft=1 ;;
+    # The gate only inspects the current branch of the local repo, so a PR
+    # for another branch or repo can't be checked.
+    --head | --head=* | -H | --repo | --repo=* | -R)
+      deny "$repo" "\`gh pr create\` with \`--head\` or \`--repo\` isn't allowed: the gate can only check the current branch of this repo. Switch to the branch and run \`gh pr create --draft\` from it, without those flags."
+      ;;
     \<* | \>* | [0-9]\>*) break ;;
   esac
 done
+if [ "$draft" = 0 ]; then
+  deny "$repo" "PRs must be opened as drafts. Add \`--draft\`."
+fi
 if [ "$base" = Q ] || [[ "$base" == *'$'* ]]; then
   deny "$repo" "Pass \`--base\` as a literal, unquoted branch name (e.g. \`--base main\`), so the gate can compare the branch with it."
 fi
@@ -224,8 +234,9 @@ if ! grep -Eiv "$DOC_PATTERN" <<<"$paths" | grep -q .; then
   allow "repo=$repo base=$base_ref docs-only"
 fi
 
-# Deletions never count as a review file.
-files="$(awk -F'\t' '$1 != "D" && NF > 1 { print $NF }' <<<"$changes" | sort -u)"
+# Only a review file this branch adds counts. Editing or deleting an older
+# one already on the base doesn't review this branch.
+files="$(awk -F'\t' '$1 == "A" && NF > 1 { print $NF }' <<<"$changes" | sort -u)"
 if grep -Eq "$REVIEW_PATTERN" <<<"$files"; then
   allow "repo=$repo base=$base_ref review=$(grep -E "$REVIEW_PATTERN" <<<"$files" | tr '\n' ' ')"
 fi
