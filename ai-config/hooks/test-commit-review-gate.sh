@@ -126,6 +126,12 @@ check "PR, -H another branch" "$R" "gh pr create --draft -H feat/other" deny
 check "PR, --head=another branch" "$R" "gh pr create --draft --head=feat/other" deny
 check "PR, --repo another repo" "$R" "gh pr create --draft --repo o/r" deny
 check "PR, -R another repo" "$R" "gh pr create --draft -R o/r" deny
+check "PR, -Hbranch attached" "$R" "gh pr create --draft -Hfeat/other" deny
+check "PR, -Rrepo attached" "$R" "gh pr create --draft -Ro/r" deny
+check "PR, gh -R before pr" "$R" "gh -R o/r pr create --draft" deny
+check "PR, gh --repo before pr" "$R" "gh --repo o/r pr create --draft" deny
+check "PR, --draft=false wins" "$R" "gh pr create --draft --draft=false" deny
+check "PR, --draft=true" "$R" "gh pr create --draft=true" allow
 g remote set-head origin -d
 check "PR without origin/HEAD falls back to origin/main" "$R" "gh pr create --draft" allow
 g remote set-head origin main
@@ -149,6 +155,13 @@ echo n >"$R/run.sh" && g add run.sh && g commit -qm code
 check "PR, docs + code branch" "$R" "gh pr create --draft" deny
 g switch -q main && g switch -q -c chore/none
 check "PR, no changes vs base" "$R" "gh pr create --draft" allow
+
+# An attached -B<base> is the base: a review that's only on main...dev
+# doesn't count for a branch cut from dev
+g switch -q -c dev && mkdir -p "$R/docs/reviews" && echo r >"$R/docs/reviews/2026-01-02-dev.md" && g add docs && g commit -qm "dev review"
+g switch -q -c feat/stacked && echo s >>"$R/app.py" && g add app.py && g commit -qm stacked
+check "PR, -Bdev attached, no review vs dev" "$R" "gh pr create --draft -Bdev" deny
+check "PR, --base dev, no review vs dev" "$R" "gh pr create --draft --base dev" deny
 
 # Internal errors block instead of allowing (simulated with an unset variable)
 FAKE_HOOK="$TMP/broken-hook.sh"

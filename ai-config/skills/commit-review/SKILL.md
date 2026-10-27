@@ -51,7 +51,9 @@ branch before the draft PR. Implements `docs/feature-review.md` and
    - `VERDICT: BLOCK` — don't open the PR. Show the user the blocking
      findings, fix them in new commits, and run `/commit-review` again.
    - `VERDICT: PASS` — commit the review file on its own
-     (`docs(review): <slug>`), push with `git push -u origin HEAD`, and
+     (`docs(review): <slug>`, with a 2–4 line body: the verdict, what was
+     reviewed, and any non-blocking findings left open), push with
+     `git push -u origin HEAD`, and
      open the draft PR (see `docs/commit-messages.md`). Give the user a
      short summary: verdict, the not-done/not-tested items, the review file
      path, the branch, the commits and the PR link.

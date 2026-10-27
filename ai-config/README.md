@@ -56,13 +56,14 @@ Gate rules:
   commit lands on.
 - `gh pr create` is denied unless `git diff <base>...HEAD` contains a
   review file the branch adds and has committed. Editing or deleting an
-  older review already on the base doesn't count.
-- `gh pr create` must be a draft (`--draft`/`-d`), and `--head`/`-H` and
-  `--repo`/`-R` are denied: the gate can only check the current branch of
-  the local repo. The base is
-  `--base`/`-B`, else `origin/HEAD`, else `origin/main`, `origin/master`,
-  `main`, `master`. A `--base` that's quoted, a variable, or doesn't exist
-  is denied.
+  older review already on the base doesn't count. The base is
+  `--base`/`-B` (also `--base=x`, `-Bx`), else `origin/HEAD`, else
+  `origin/main`, `origin/master`, `main`, `master`. A `--base` that's
+  quoted, a variable, or doesn't exist is denied.
+- `gh pr create` must be a draft (`--draft`/`-d`; a later `--draft=false`
+  wins), and `--head`/`-H` and `--repo`/`-R` are denied in every form
+  (`-Hx`, `--head=x`, and `gh -R x pr create`): the gate can only check
+  the current branch of the local repo.
 - Docs-only branches need no review: if every changed path (including
   deletions and both sides of a rename) is a `.md`, `.mdx`, `.markdown`,
   `.rst`, `.txt` or `.adoc` file, or an extensionless LICENSE/CHANGELOG/
@@ -94,8 +95,12 @@ not enforced by the hook. Not detected: commands wrapped in a quoted string
 `gh` creating a PR any other way. A `cd` inside a subshell
 (`(cd x && make); git commit`) is still applied. Unquoted text such as
 `echo git commit` still counts as a commit. With `--git-dir`/`--work-tree`
-the repo is still resolved from the working directory. Without `jq` the
-hook allows everything.
+the repo is still resolved from the working directory. Combined short
+flags such as `-dB dev` aren't parsed, so they're denied as non-drafts.
+A branch stacked on another branch (cut from `dev`) with no `--base` is
+compared with the default branch, so a review already merged into `dev`
+counts for it; pass `--base <the branch the work started from>`, as the
+workflow requires. Without `jq` the hook allows everything.
 
 To add a skill: create `skills/<name>/SKILL.md`, re-run `./install.sh`, and
 restart Claude Code.
@@ -165,7 +170,8 @@ When you (or an agent) learn a new durable preference or convention:
    git switch -c docs/<what-changed>
    cd ai-config && ./build.sh && cd ..
    git add ai-config/
-   git commit -m "docs(ai-config): <what changed>"
+   git commit -m "docs(ai-config): <what changed>" \
+     -m "<2–4 lines: what changed, why, and the alternatives rejected>"
    # code/config/script changes: in Claude Code run /commit-review, which
    # commits docs/reviews/YYYY-MM-DD-<slug>.md on the branch
    git push -u origin HEAD

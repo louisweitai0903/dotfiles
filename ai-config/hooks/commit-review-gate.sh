@@ -71,10 +71,10 @@ bare="$(awk '
   }' <<<"$cmd" | tr '\n' ';' | sed -E "s/\"([^\"\\\\]|\\\\.)*\"/Q/g; s/'[^']*'/Q/g")"
 
 # Match `[/path/]git [global opts] commit`, but not `git commit-tree` or
-# `git log --grep commit`; and `[/path/]gh pr create`.
+# `git log --grep commit`; and `[/path/]gh [global opts] pr create`.
 git_re='(^|[^[:alnum:]_.-])(/[^[:space:]]*/)?git'
 git_commit_re="${git_re}([[:space:]]+(-C|-c|--git-dir|--work-tree|--namespace)[[:space:]]+[^[:space:]]+|[[:space:]]+--?[[:alnum:]][^[:space:]]*)*[[:space:]]+commit([[:space:]]|\$|[;&|)])"
-pr_create_re="(^|[^[:alnum:]_.-])(/[^[:space:]]*/)?gh[[:space:]]+pr[[:space:]]+create([[:space:]]|\$|[;&|)])"
+pr_create_re="(^|[^[:alnum:]_.-])(/[^[:space:]]*/)?gh([[:space:]]+-[^[:space:]]+([[:space:]]+[^-[:space:]][^[:space:]]*)?)*[[:space:]]+pr[[:space:]]+create([[:space:]]|\$|[;&|)])"
 
 is_commit=0 is_pr=0
 grep -Eq "$git_commit_re" <<<"$bare" && is_commit=1
@@ -170,6 +170,10 @@ if [ "$is_commit" = 1 ]; then
 fi
 
 # PRs: the branch must carry a committed review file, compared with its base.
+# A global `gh -R/--repo` (before `pr`) targets a repo the gate can't see.
+if grep -Eq '[[:space:]](-R|--repo)' <<<"$(sed -E 's/[[:space:]]+pr[[:space:]]+create.*//' <<<"$invocation")"; then
+  deny "$repo" "\`gh pr create\` with \`--head\` or \`--repo\` isn't allowed: the gate can only check the current branch of this repo. Switch to the branch and run \`gh pr create --draft\` from it, without those flags."
+fi
 after="$(sed -E "s#^.*${pr_create_re}##" <<<"$bare")"
 after="${after%%[;&|]*}"
 read -ra args <<<"$after"
@@ -184,10 +188,13 @@ for arg in ${args[@]+"${args[@]}"}; do
   case "$arg" in
     --base | -B) skip=1 ;;
     --base=*) base="${arg#--base=}" ;;
-    --draft | -d) draft=1 ;;
+    -B?*) base="${arg#-B}" ;;
+    --draft | -d | --draft=true) draft=1 ;;
+    --draft=*) draft=0 ;;
     # The gate only inspects the current branch of the local repo, so a PR
-    # for another branch or repo can't be checked.
-    --head | --head=* | -H | --repo | --repo=* | -R)
+    # for another branch or repo can't be checked. -H*/-R* also cover the
+    # attached forms (-Hbranch, -Rowner/repo).
+    --head | --head=* | -H* | --repo | --repo=* | -R*)
       deny "$repo" "\`gh pr create\` with \`--head\` or \`--repo\` isn't allowed: the gate can only check the current branch of this repo. Switch to the branch and run \`gh pr create --draft\` from it, without those flags."
       ;;
     \<* | \>* | [0-9]\>*) break ;;
