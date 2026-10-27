@@ -7,7 +7,6 @@ Required structure:
 ```text
 project-root/
 │
-├── HANDOFF.md
 ├── README.md
 ├── STATUS.md
 ├── PROGRESS.md
@@ -71,7 +70,11 @@ Every completed task should record:
 
 This file should provide a clear history of development work.
 
-## HANDOFF.md
+## HANDOFF.md (optional)
+
+Handoffs are optional and not a required file. Only write or read one
+when the user asks (in Claude Code, `/handoff`). If a repo already has its
+own handoff files, leave them as they are.
 
 HANDOFF.md is the continuity document for future sessions. It should help the next agent quickly understand the current project state without re-discovering completed work.
 
@@ -86,7 +89,7 @@ Include:
 Write one handoff per session at `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md`
 (in Claude Code, `/handoff <title>` does this). `HANDOFF.md` at the project
 root is then an index: a **Latest** link to the newest handoff, followed by a
-newest-first **History** list. Read the latest handoff before starting work.
+newest-first **History** list.
 Each handoff ends with a one-line **resume prompt** (absolute project path,
 handoff file, first next step) that can be pasted into a new session.
 
@@ -103,7 +106,7 @@ Before creating any of these in a git repo, make sure each path is listed
 in `$(git rev-parse --git-common-dir)/info/exclude`, and add any that are
 missing. This keeps them untracked without touching the repo's shared
 `.gitignore`. Never stage or commit them. If the repo already tracks one of
-them, tell the user rather than untracking it.
+them, leave it as it is: don't untrack, exclude or migrate it.
 
 ## docs/
 
@@ -142,8 +145,7 @@ Whenever code changes:
 1. Review README.md.
 2. Review STATUS.md.
 3. Review PROGRESS.md.
-4. Review HANDOFF.md.
-5. Review docs/.
-6. Update any outdated documentation.
+4. Review docs/.
+5. Update any outdated documentation.
 
 A task is not complete until documentation is updated.

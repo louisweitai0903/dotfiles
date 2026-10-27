@@ -19,7 +19,7 @@ instructions.
    `$(git rev-parse --git-common-dir)/info/exclude`, and add any that are
    missing. Handoffs are local-only and never committed (see "Local-only
    files" in `docs/documentation-standards.md`). If the repo already tracks
-   any of them, tell the user rather than untracking it.
+   any of them, leave it as it is.
 
 2. **Name the file.** Title slug = `$ARGUMENTS` converted to lowercase
    kebab-case (letters, digits, hyphens; at most ~50 characters). With no
@@ -96,10 +96,11 @@ instructions.
    - [<older title> — YYYY-MM-DD HH:MM](docs/handoffs/<older file>.md)
    ```
 
-   Move the previous "Latest" entry to the top of "History". If `HANDOFF.md`
-   exists but isn't in this index format, first move its full content to
-   `docs/handoffs/handoff-legacy-<YYYY-MM-DD>.md` (nothing gets lost), list
-   that file in History, and tell the user you did so.
+   Move the previous "Latest" entry to the top of "History". If the repo
+   already has its own handoff files (a `HANDOFF.md` not in this index
+   format, or tracked handoff files), leave them exactly as they are: don't
+   migrate, reformat, untrack or exclude them. Ask the user where this
+   handoff should go instead.
 
 6. **Write the resume prompt.** One line, under ~300 characters, that a
    brand-new session can act on with no other context. It must contain the

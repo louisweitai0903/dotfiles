@@ -2,7 +2,7 @@
 
 Before writing code:
 
-1. If a project HANDOFF.md exists, read it and the latest handoff it links to (`docs/handoffs/`) before starting work in a new session.
+1. Read a handoff (`HANDOFF.md`, `docs/handoffs/`) only when the user points you to one. Don't look for one on your own.
 2. Fully understand the request.
 3. Identify affected files and dependencies.
 4. Determine whether the functionality already works.
