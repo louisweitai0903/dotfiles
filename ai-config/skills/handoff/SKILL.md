@@ -14,7 +14,12 @@ instructions.
 ## Steps
 
 1. **Locate the project.** Root = `git rev-parse --show-toplevel`, or the
-   current directory if it isn't a git repo.
+   current directory if it isn't a git repo. In a git repo, make sure
+   `/HANDOFF.md`, `/docs/handoffs/` and `/docs/tasks/` are listed in
+   `$(git rev-parse --git-common-dir)/info/exclude`, and add any that are
+   missing. Handoffs are local-only and never committed (see "Local-only
+   files" in `docs/documentation-standards.md`). If the repo already tracks
+   any of them, tell the user rather than untracking it.
 
 2. **Name the file.** Title slug = `$ARGUMENTS` converted to lowercase
    kebab-case (letters, digits, hyphens; at most ~50 characters). With no
@@ -25,6 +30,8 @@ instructions.
    - `git status --short`, `git branch --show-current`, `git log --oneline -15`,
      and `git diff --stat` / `git diff --cached --stat` for in-flight work.
    - `STATUS.md`, `PROGRESS.md`, and any `docs/reviews/` files from this session.
+   - Today's task list, `docs/tasks/$(date +%F).md`, if it exists (see
+     `docs/daily-tasks.md` in the global instructions).
    - This conversation: what was asked, what was tried, what failed, what was
      decided and why.
 
@@ -38,6 +45,12 @@ instructions.
    - **Date:** YYYY-MM-DD HH:MM
    - **Branch:** <branch> (HEAD <short sha>)
    - **Session goal:** <what the user asked for, in a sentence or two>
+
+   ## Today's tasks
+   [docs/tasks/YYYY-MM-DD.md](../tasks/YYYY-MM-DD.md) (local, untracked)
+   - Done: <items ticked today, one line each>
+   - Open: <items still open>
+   <Or "No task list for today.">
 
    ## Changes this session
    <Core functions, architecture, data flows, commands, and important files
@@ -96,7 +109,6 @@ instructions.
 
    Put it in the handoff's "Resume prompt" section.
 
-7. **Don't commit.** The files are committed with the next piece of work
-   (through `/commit-review`) or when the user asks. Reply with the handoff
+7. **Never commit.** Handoff files stay local and untracked. Reply with the handoff
    path and a two-line summary, and end the reply with the resume prompt
    alone in a code block, as the very last thing, so it's easy to copy.

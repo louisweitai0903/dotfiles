@@ -12,6 +12,7 @@ ORDER=(
   role.md
   safety.md
   before-starting.md
+  daily-tasks.md
   execution-plan.md
   scope-control.md
   implementation-standards.md

@@ -41,7 +41,7 @@ if a rule changes, update the skill/agent that carries it out.
 
 | Name | Kind | What it does |
 |------|------|--------------|
-| `/handoff [title]` | skill (`skills/handoff`) | Writes `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md` for the current session, updates the `HANDOFF.md` index, and ends with a one-line resume prompt to paste into a new session. Manual only. |
+| `/handoff [title]` | skill (`skills/handoff`) | Writes `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md` for the current session, updates the `HANDOFF.md` index, and ends with a one-line resume prompt to paste into a new session. Handoff files are local-only (added to `.git/info/exclude`, never committed). Manual only. |
 | `/commit-review [slug]` | skill (`skills/commit-review`) | Reviews the staged changes in a fresh subagent, writes `docs/reviews/YYYY-MM-DD-<slug>.md` (coverage, edge cases, untested areas, done/not-done checklist, findings, PASS/BLOCK) and stages it. Only for commits that include code — docs-only commits skip it. |
 | `commit-reviewer` | subagent (`agents/commit-reviewer.md`) | The read-only, fresh-context reviewer `/commit-review` delegates to. |
 | `commit-review-gate.sh` | PreToolUse hook (`hooks/`) | Denies `git commit` commands Claude runs (see gate limits below) unless a `docs/reviews/*.md` file (at the repo root or in a subproject) is staged. Logs decisions to `~/.claude/logs/commit-review-gate.log`. |
@@ -96,6 +96,7 @@ restart Claude Code.
 | `role.md` | The senior-engineer mindset every response should have |
 | `safety.md` | Destructive commands that always need explicit approval |
 | `before-starting.md` | What to understand before writing any code |
+| `daily-tasks.md` | Read/create the project's `docs/tasks/YYYY-MM-DD.md` at session start (local-only, like handoffs); mark items done with their changes and keep a daily summary; `/handoff` links to it |
 | `execution-plan.md` | When and how to write a plan before implementing |
 | `scope-control.md` | Keeping changes to what was actually asked |
 | `implementation-standards.md` | Code quality expectations |

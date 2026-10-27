@@ -90,6 +90,21 @@ newest-first **History** list. Read the latest handoff before starting work.
 Each handoff ends with a one-line **resume prompt** (absolute project path,
 handoff file, first next step) that can be pasted into a new session.
 
+## Local-only files
+
+Handoffs and daily task lists are personal session notes. They stay in the
+project but are never committed:
+
+- `/HANDOFF.md`
+- `/docs/handoffs/`
+- `/docs/tasks/` (see `daily-tasks.md`)
+
+Before creating any of these in a git repo, make sure each path is listed
+in `$(git rev-parse --git-common-dir)/info/exclude`, and add any that are
+missing. This keeps them untracked without touching the repo's shared
+`.gitignore`. Never stage or commit them. If the repo already tracks one of
+them, tell the user rather than untracking it.
+
 ## docs/
 
 Every project must contain a docs folder.
