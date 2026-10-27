@@ -42,11 +42,18 @@ if a rule changes, update the skill/agent that carries it out.
 | Name | Kind | What it does |
 |------|------|--------------|
 | `/handoff [title]` | skill (`skills/handoff`) | Writes `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md` for the current session, updates the `HANDOFF.md` index, and ends with a one-line resume prompt to paste into a new session. Manual only. |
-| `/commit-review [slug]` | skill (`skills/commit-review`) | Reviews the staged changes in a fresh subagent, writes `docs/reviews/YYYY-MM-DD-<slug>.md` (coverage, edge cases, untested areas, done/not-done checklist, findings, PASS/BLOCK) and stages it. |
+| `/commit-review [slug]` | skill (`skills/commit-review`) | Reviews the staged changes in a fresh subagent, writes `docs/reviews/YYYY-MM-DD-<slug>.md` (coverage, edge cases, untested areas, done/not-done checklist, findings, PASS/BLOCK) and stages it. Only for commits that include code — docs-only commits skip it. |
 | `commit-reviewer` | subagent (`agents/commit-reviewer.md`) | The read-only, fresh-context reviewer `/commit-review` delegates to. |
 | `commit-review-gate.sh` | PreToolUse hook (`hooks/`) | Denies `git commit` commands Claude runs (see gate limits below) unless a `docs/reviews/*.md` file (at the repo root or in a subproject) is staged. Logs decisions to `~/.claude/logs/commit-review-gate.log`. |
 
 Gate rules:
+- Docs-only commits need no review: if every changed path (including
+  deletions and both sides of a rename) is a `.md`, `.mdx`, `.markdown`,
+  `.rst`, `.txt` or `.adoc` file, or an extensionless LICENSE/CHANGELOG/
+  CHANGES/AUTHORS/CONTRIBUTORS/NOTICE/COPYING file, the commit is allowed
+  (`changes.py` or `Notice.tsx` still need review; `.txt` includes
+  `requirements.txt` and `CMakeLists.txt`, by choice). Any other file
+  in the commit means a review is required.
 - Stage files in a separate command before committing. `git add x && git commit`
   is denied, because the hook runs before the `git add` and can't see what
   will be committed.

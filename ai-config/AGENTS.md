@@ -346,6 +346,11 @@ A task is not complete until documentation is updated.
 Every completed feature or bug fix gets an independent review, written up
 as a Markdown file, **before** it is committed.
 
+Docs-only commits are exempt: if every changed file is documentation
+(`.md`, `.mdx`, `.markdown`, `.rst`, `.txt`, `.adoc`, or LICENSE/CHANGELOG/
+AUTHORS/NOTICE-style files), commit without a review. Any other file in the
+commit — code, config, scripts — means it needs one.
+
 ## Fresh-session review
 
 - Run the review in a new session with no context carried over from the
@@ -413,7 +418,8 @@ in the project, and include it in the feature's commit. It must contain:
 7. Review diff.
 8. Update documentation.
 9. Run the fresh-session feature review and write its review file (see
-   `feature-review.md`) — in Claude Code, `/commit-review`.
+   `feature-review.md`) — in Claude Code, `/commit-review`. Skip this step
+   for docs-only commits.
 10. Commit.
 
 Never commit unnecessary generated files. Only create a checkpoint commit

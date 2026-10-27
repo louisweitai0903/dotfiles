@@ -3,6 +3,11 @@
 Every completed feature or bug fix gets an independent review, written up
 as a Markdown file, **before** it is committed.
 
+Docs-only commits are exempt: if every changed file is documentation
+(`.md`, `.mdx`, `.markdown`, `.rst`, `.txt`, `.adoc`, or LICENSE/CHANGELOG/
+AUTHORS/NOTICE-style files), commit without a review. Any other file in the
+commit — code, config, scripts — means it needs one.
+
 ## Fresh-session review
 
 - Run the review in a new session with no context carried over from the

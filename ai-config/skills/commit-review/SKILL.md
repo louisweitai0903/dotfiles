@@ -1,6 +1,6 @@
 ---
 name: commit-review
-description: Fresh-context review of the staged changes before a git commit. Runs the commit-reviewer subagent, writes docs/reviews/YYYY-MM-DD-<slug>.md (coverage, edge cases, untested areas and why, done/not-done checklist) and stages it. Use before every commit — a hook blocks commits that don't include a review file.
+description: Fresh-context review of the staged changes before a git commit. Runs the commit-reviewer subagent, writes docs/reviews/YYYY-MM-DD-<slug>.md (coverage, edge cases, untested areas and why, done/not-done checklist) and stages it. Use before committing any code change — a hook blocks such commits without a review file. Not needed for docs-only commits.
 argument-hint: "[feature-slug]"
 ---
 
@@ -20,6 +20,10 @@ instructions.
      dependency folders, caches, or build output), then continue.
    - Staged changes cover more than one feature/fix: stop and split them —
      one review and one commit per feature.
+   - Every staged file is documentation (`.md`, `.mdx`, `.markdown`, `.rst`,
+     `.txt`, `.adoc`, or LICENSE/CHANGELOG/AUTHORS/NOTICE-style files): stop —
+     no review is needed. Tell the user and commit directly; the gate allows
+     docs-only commits.
 
 2. **Pick the file path.** Slug = `$ARGUMENTS` if given, otherwise a short
    kebab-case name for the change (e.g. `auth-refresh-token-expiry`).

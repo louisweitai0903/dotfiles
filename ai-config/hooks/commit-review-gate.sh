@@ -2,6 +2,7 @@
 # PreToolUse hook (Bash): blocks a `git commit` run by Claude Code unless a
 # review file (docs/reviews/*.md) is part of that commit. The review file is
 # produced by the /commit-review skill — see docs/feature-review.md.
+# Docs-only commits (every changed path matches DOC_PATTERN) are exempt.
 #
 # Reads the hook JSON on stdin. Allows by exiting 0 with no output; denies by
 # printing a hookSpecificOutput "deny" decision. Every decision is logged to
@@ -12,6 +13,11 @@ set -uo pipefail
 LOG_FILE="${COMMIT_REVIEW_GATE_LOG:-$HOME/.claude/logs/commit-review-gate.log}"
 # docs/reviews/ at the repo root, or under a subproject (monorepos).
 REVIEW_PATTERN='(^|/)docs/reviews/[^/]+\.md$'
+# Documentation files (matched case-insensitively). A commit touching only
+# these needs no review. LICENSE-style names match only without an extension
+# (CHANGELOG.md etc. are covered by the extension list), so code such as
+# changes.py or Notice.tsx still needs review.
+DOC_PATTERN='(\.(md|mdx|markdown|rst|txt|adoc)|(^|/)(licen[cs]e|changelog|changes|authors|contributors|notice|copying))$'
 
 log() {
   mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || return 0
@@ -184,6 +190,13 @@ if [ -z "$(sed '/^$/d' <<<"$changes")" ]; then
     allow "repo=$repo nothing-staged (amend/allow-empty)"
   fi
   deny "$repo" "Nothing is staged. Stage the files for this change first, run /commit-review, then commit."
+fi
+
+# Docs-only commits are exempt. Every path counts, including deletions and
+# both sides of a rename.
+paths="$(awk -F'\t' 'NF > 1 { for (i = 2; i <= NF; i++) print $i }' <<<"$changes" | sort -u)"
+if ! grep -Eiv "$DOC_PATTERN" <<<"$paths" | grep -q .; then
+  allow "repo=$repo docs-only"
 fi
 
 if grep -Eq "$REVIEW_PATTERN" <<<"$files"; then

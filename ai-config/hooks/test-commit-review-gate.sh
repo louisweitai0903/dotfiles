@@ -29,11 +29,11 @@ check() {
 g() { git -C "$R" "$@"; }
 
 g init -q && g config user.email test@example.com && g config user.name test
-echo a >"$R/app.txt" && g add . && g commit -qm init
+echo a >"$R/app.py" && g add . && g commit -qm init
 
 # Not a commit
 check "non-commit command" "$R" "ls -la" allow
-check "git add alone" "$R" "git add app.txt" allow
+check "git add alone" "$R" "git add app.py" allow
 check "git commit-tree" "$R" "git commit-tree abc" allow
 check "git log --grep commit" "$R" "git log --grep commit" allow
 check "echo mentioning git commit" "$R" 'echo "run git commit later"' allow
@@ -43,11 +43,11 @@ check "grep for git commit -m" "$R" "grep -rn 'git commit -m' docs" allow
 check "nothing staged" "$R" "git commit -m x" deny
 check "message-only amend" "$R" "git commit --amend -m x" allow
 check "allow-empty" "$R" "git commit --allow-empty -m x" allow
-check "pathspec, nothing staged" "$R" "git commit app.txt -m x" deny
+check "pathspec, nothing staged" "$R" "git commit app.py -m x" deny
 check "outside any repo" "$OUT" "git commit -m x" allow
 
 # Code staged, no review
-echo b >>"$R/app.txt" && g add app.txt
+echo b >>"$R/app.py" && g add app.py
 check "staged code, no review" "$R" "git commit -m 'fix a bug'" deny
 check "plain git commit, no review" "$R" "git commit" deny
 check "git commit;" "$R" "git commit;" deny
@@ -76,15 +76,15 @@ check "heredoc message mentions git rm" "$R" "$(printf 'git commit -m "$(cat <<%
 check "unquoted heredoc message" "$R" "$(printf 'git commit -F - <<EOF\nfix[x] -- y\nEOF')" allow
 check "heredoc body with quoted phrase" "$R" "$(printf 'git commit -m "$(cat <<%sEOF%s\nfix: "a b" c\n\nsee "docs/x y" and git add notes\nEOF\n)"' "'" "'")" allow
 check "escaped quotes in -m" "$R" 'git commit -m "say \"hi\""' allow
-check "/usr/bin/git commit detected" "$R" "/usr/bin/git commit -m x app.txt" deny
-check "--git-dir X commit detected" "$R" "git --git-dir .git commit -m x app.txt" deny
+check "/usr/bin/git commit detected" "$R" "/usr/bin/git commit -m x app.py" deny
+check "--git-dir X commit detected" "$R" "git --git-dir .git commit -m x app.py" deny
 check "redirect after commit" "$R" "git commit -m x 2>&1" allow
-check "add && commit" "$R" "git add app.txt && git commit -m x" deny
+check "add && commit" "$R" "git add app.py && git commit -m x" deny
 check "-C add && -C commit" "$OUT" "git -C $R add . && git -C $R commit -m x" deny
-check "pathspec with review staged" "$R" "git commit -m x app.txt" deny
-check "-- pathspec" "$R" "git commit -m x -- app.txt" deny
-check "--only" "$R" "git commit -o -m x app.txt" deny
-check "--include" "$R" "git commit -i app.txt -m x" deny
+check "pathspec with review staged" "$R" "git commit -m x app.py" deny
+check "-- pathspec" "$R" "git commit -m x -- app.py" deny
+check "--only" "$R" "git commit -o -m x app.py" deny
+check "--include" "$R" "git commit -i app.py -m x" deny
 
 # Monorepo review location
 g reset -q docs && mkdir -p "$R/pkg/a/docs/reviews" && echo r >"$R/pkg/a/docs/reviews/2026-01-01-y.md" && g add pkg
@@ -95,21 +95,46 @@ g rm -q --cached "docs/reviews/2026-01-01-café.md" && rm "$R/docs/reviews/2026-
 g add docs && g commit -qm reviewed
 
 # -a / --amend against a reviewed HEAD
-echo c >>"$R/app.txt" && echo r2 >>"$R/docs/reviews/2026-01-01-x.md"
+echo c >>"$R/app.py" && echo r2 >>"$R/docs/reviews/2026-01-01-x.md"
 check "-am with modified review" "$R" "git commit -am x" allow
 check "-a with modified review" "$R" "git commit -a -m x" allow
 g checkout -q docs/reviews/2026-01-01-x.md
 check "-a, review unchanged" "$R" "git commit -a -m x" deny
 check "-C with -am" "$OUT" "git -C $R commit -am x" deny
-echo r3 >>"$R/docs/reviews/2026-01-01-x.md" && g add app.txt
+echo r3 >>"$R/docs/reviews/2026-01-01-x.md" && g add app.py
 check "-la in message is not -a" "$R" "git commit -m '-la'" deny
 check "odd quote + -a in heredoc body" "$R" "$(printf 'git commit -m "$(cat <<%sEOF%s\nfix: "x -a\nEOF\n)"' "'" "'")" deny
 g checkout -q docs/reviews/2026-01-01-x.md
 check "amend adding code to reviewed HEAD" "$R" "git commit --amend --no-edit" allow
-g reset -q && g checkout -q . && g rm -q app.txt
+g reset -q && g checkout -q . && g rm -q app.py
 check "delete-only, no review" "$R" "git commit -m x" deny
-g reset -q && g checkout -q . && g rm -q --cached docs/reviews/2026-01-01-x.md
+g reset -q && g checkout -q . && echo d >>"$R/app.py" && g add app.py && g rm -q --cached docs/reviews/2026-01-01-x.md
 check "deleted review doesn't count" "$R" "git commit -m x" deny
+
+# Docs-only commits need no review
+g reset -q && g checkout -q .
+echo n >"$R/README.md" && mkdir -p "$R/guide" && echo n >"$R/guide/intro.MDX" && g add README.md guide
+check "docs-only (md, mdx)" "$R" "git commit -m x" allow
+echo n >"$R/LICENSE" && echo n >"$R/notes.txt" && echo n >"$R/CHANGELOG" && g add LICENSE notes.txt CHANGELOG
+check "docs-only (LICENSE, CHANGELOG, txt)" "$R" "git commit -m x" allow
+echo n >"$R/run.sh" && g add run.sh
+check "docs + code needs review" "$R" "git commit -m x" deny
+g reset -q run.sh && rm "$R/run.sh" && g commit -qm docs
+for code in lib/changes.py src/Notice.tsx license.js; do
+  mkdir -p "$R/$(dirname "$code")" && echo n >"$R/$code" && g add "$code"
+  check "doc-like name with code extension ($code)" "$R" "git commit -m x" deny
+  g rm -q --cached "$code" && rm "$R/$code"
+done
+g rm -q --cached docs/reviews/2026-01-01-x.md
+check "deleting a doc is docs-only" "$R" "git commit -m x" allow
+g reset -q && g mv README.md README.rst
+check "renaming a doc is docs-only" "$R" "git commit -m x" allow
+g mv README.rst readme.py
+check "renaming a doc to code needs review" "$R" "git commit -m x" deny
+g mv readme.py README.md && echo e >>"$R/app.py" && echo e >>"$R/README.md" && g add README.md
+check "docs staged, -a adds code" "$R" "git commit -am x" deny
+check "docs staged, no -a" "$R" "git commit -m x" allow
+g reset -q && g checkout -q .
 
 # Internal errors block instead of allowing (simulated with an unset variable)
 FAKE_HOOK="$TMP/broken-hook.sh"
