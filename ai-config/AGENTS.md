@@ -43,7 +43,7 @@ Always ask for approval before performing destructive actions.
 
 Before writing code:
 
-1. If a project HANDOFF.md exists, read it before starting work in a new session.
+1. If a project HANDOFF.md exists, read it and the latest handoff it links to (`docs/handoffs/`) before starting work in a new session.
 2. Fully understand the request.
 3. Identify affected files and dependencies.
 4. Determine whether the functionality already works.
@@ -289,6 +289,13 @@ Include:
 - Changes made during the current session, especially core functions, architecture, data flows, commands, and important files modified.
 - Clear next steps, including recommended commands, tests, open questions, and risks.
 
+Write one handoff per session at `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md`
+(in Claude Code, `/handoff <title>` does this). `HANDOFF.md` at the project
+root is then an index: a **Latest** link to the newest handoff, followed by a
+newest-first **History** list. Read the latest handoff before starting work.
+Each handoff ends with a one-line **resume prompt** (absolute project path,
+handoff file, first next step) that can be pasted into a new session.
+
 ## docs/
 
 Every project must contain a docs folder.
@@ -351,6 +358,12 @@ as a Markdown file, **before** it is committed.
   explicitly and do the review as a separate, clearly marked pass.
 - If the review finds a real defect, fix it and re-review before
   committing. Don't commit over an open finding.
+- In Claude Code, run it with `/commit-review`: it hands the staged diff to
+  the `commit-reviewer` subagent (fresh context, no edits), writes the
+  review file below, and stages it. A PreToolUse hook blocks any
+  `git commit` Claude runs that doesn't include a `docs/reviews/*.md` file.
+- If the change is edited or restaged after the review, the review is
+  stale — run it again before committing.
 
 ## Review file
 
@@ -369,11 +382,19 @@ in the project, and include it in the feature's commit. It must contain:
   handles, and the tests that prove each one.
 - **Edge cases** — edge cases considered, how each is handled, and any
   that are knowingly **not** handled (with the reason).
+- **Not tested** — anything left untested, each with either why it's
+  acceptable for this commit or why it needs follow-up work.
 - **Production rollout & downtime** — if the product is already live:
   expected downtime (or "zero downtime" and why), migrations and their
   locking/duration impact, required deploy order across services,
   config/env changes, feature flags, and the rollback procedure. If the
   product is not live yet, state that and skip the downtime analysis.
+- **Checklist** — `- [x]` for each requirement, behavior, test, and doc
+  update that is done; `- [ ]` for each that isn't, with "OK for this
+  commit because …" or "Follow-up: …".
+- **Findings** — ranked most severe first, each marked blocking or
+  non-blocking with a concrete failure scenario, plus the verdict
+  (PASS/BLOCK).
 - **Risks & follow-ups** — anything remaining that the user should know
   before shipping.
 
@@ -392,7 +413,7 @@ in the project, and include it in the feature's commit. It must contain:
 7. Review diff.
 8. Update documentation.
 9. Run the fresh-session feature review and write its review file (see
-   `feature-review.md`).
+   `feature-review.md`) — in Claude Code, `/commit-review`.
 10. Commit.
 
 Never commit unnecessary generated files. Only create a checkpoint commit

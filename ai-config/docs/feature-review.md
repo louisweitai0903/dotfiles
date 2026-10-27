@@ -15,6 +15,12 @@ as a Markdown file, **before** it is committed.
   explicitly and do the review as a separate, clearly marked pass.
 - If the review finds a real defect, fix it and re-review before
   committing. Don't commit over an open finding.
+- In Claude Code, run it with `/commit-review`: it hands the staged diff to
+  the `commit-reviewer` subagent (fresh context, no edits), writes the
+  review file below, and stages it. A PreToolUse hook blocks any
+  `git commit` Claude runs that doesn't include a `docs/reviews/*.md` file.
+- If the change is edited or restaged after the review, the review is
+  stale — run it again before committing.
 
 ## Review file
 
@@ -33,10 +39,18 @@ in the project, and include it in the feature's commit. It must contain:
   handles, and the tests that prove each one.
 - **Edge cases** — edge cases considered, how each is handled, and any
   that are knowingly **not** handled (with the reason).
+- **Not tested** — anything left untested, each with either why it's
+  acceptable for this commit or why it needs follow-up work.
 - **Production rollout & downtime** — if the product is already live:
   expected downtime (or "zero downtime" and why), migrations and their
   locking/duration impact, required deploy order across services,
   config/env changes, feature flags, and the rollback procedure. If the
   product is not live yet, state that and skip the downtime analysis.
+- **Checklist** — `- [x]` for each requirement, behavior, test, and doc
+  update that is done; `- [ ]` for each that isn't, with "OK for this
+  commit because …" or "Follow-up: …".
+- **Findings** — ranked most severe first, each marked blocking or
+  non-blocking with a concrete failure scenario, plus the verdict
+  (PASS/BLOCK).
 - **Risks & follow-ups** — anything remaining that the user should know
   before shipping.

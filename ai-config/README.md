@@ -24,6 +24,64 @@ Because these are symlinks, not copies, rebuilding `AGENTS.md` instantly
 changes behavior for every tool on this machine — no per-tool syncing step
 needed locally.
 
+## Folder layout
+
+| Path | What lives there | Installed to |
+|------|------------------|--------------|
+| `docs/*.md` | Source of truth for the rules, one topic per file | Concatenated into `AGENTS.md` by `build.sh` |
+| `AGENTS.md` | Generated — never hand-edit | `~/.claude/CLAUDE.md` (symlink) |
+| `skills/<name>/SKILL.md` | Claude Code skills (slash commands) | `~/.claude/skills/<name>` (symlink to the folder) |
+| `agents/<name>.md` | Claude Code custom subagents | `~/.claude/agents/<name>.md` (symlink) |
+| `hooks/*.sh` | Claude Code hook scripts, plus `test-*.sh` tests for them | `~/.claude/hooks/` (symlink), registered in `~/.claude/settings.json`; tests aren't installed |
+
+Skills, agents and hooks implement rules from `docs/` — keep them in sync:
+if a rule changes, update the skill/agent that carries it out.
+
+## Skills, agents and hooks
+
+| Name | Kind | What it does |
+|------|------|--------------|
+| `/handoff [title]` | skill (`skills/handoff`) | Writes `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md` for the current session, updates the `HANDOFF.md` index, and ends with a one-line resume prompt to paste into a new session. Manual only. |
+| `/commit-review [slug]` | skill (`skills/commit-review`) | Reviews the staged changes in a fresh subagent, writes `docs/reviews/YYYY-MM-DD-<slug>.md` (coverage, edge cases, untested areas, done/not-done checklist, findings, PASS/BLOCK) and stages it. |
+| `commit-reviewer` | subagent (`agents/commit-reviewer.md`) | The read-only, fresh-context reviewer `/commit-review` delegates to. |
+| `commit-review-gate.sh` | PreToolUse hook (`hooks/`) | Denies `git commit` commands Claude runs (see gate limits below) unless a `docs/reviews/*.md` file (at the repo root or in a subproject) is staged. Logs decisions to `~/.claude/logs/commit-review-gate.log`. |
+
+Gate rules:
+- Stage files in a separate command before committing. `git add x && git commit`
+  is denied, because the hook runs before the `git add` and can't see what
+  will be committed.
+- Commits that name paths (`git commit <paths>`, `--`, `-o`/`--only`, `-i`,
+  `--pathspec-from-file`) are denied: they commit only those paths and can
+  silently leave the staged review file out.
+- With nothing staged, only a message-only `--amend` or `--allow-empty` is
+  allowed. An `--amend` that adds files is allowed if HEAD already contains
+  a review file.
+- Quoted text and heredoc bodies (commit messages, `echo`/`grep` arguments,
+  `"$(cat <<'EOF' …)"`) are ignored when matching, so mentioning
+  `git commit`, `-a` or `git -C` in a message or search doesn't trip the gate.
+- The target repo is the session's working directory, then any
+  `cd <path>` earlier in the command, then the commit's own `git -C <path>`.
+  Paths must be literal: a variable (`$REPO`), a quoted `cd` path, or more
+  than one quoted `git -C` in the same command can't be resolved
+  unambiguously, so the commit is denied.
+- Fails closed: once a command is recognized as a commit, any internal error
+  in the hook blocks it (exit 2) rather than letting it through.
+
+Tests: `./hooks/test-commit-review-gate.sh` (throwaway repo, no side effects).
+Run it after any change to the hook.
+
+Gate limits: it only covers commits Claude runs (your own terminal commits
+are untouched), and it checks that a review file is staged, not that the
+review is current. Not detected: a commit wrapped in a quoted string
+(`bash -c "git commit …"`, `sh -c '…'`) and git aliases (`git ci`). A `cd`
+inside a subshell (`(cd x && make); git commit`) is still applied. And
+unquoted text such as `echo git commit` still counts as a commit. With
+`--git-dir`/`--work-tree` the repo is still resolved from the working
+directory. Without `jq` the hook allows everything.
+
+To add a skill: create `skills/<name>/SKILL.md`, re-run `./install.sh`, and
+restart Claude Code.
+
 ## What's in docs/
 
 | File | Covers |
@@ -58,8 +116,13 @@ cd ~/dotfiles/ai-config
 ./install.sh
 ```
 
-`install.sh` is idempotent and backs up (`.bak.<timestamp>`) anything that
-isn't already the expected symlink before replacing it.
+`install.sh` is idempotent and backs up anything that isn't already the
+expected symlink to `~/.claude/backups/<name>.bak.<timestamp>` before
+replacing it (outside `skills/` and `agents/`, so backups never load as
+duplicate skills). It links
+`AGENTS.md`, every skill, agent and hook, and adds the commit-review hook to
+`~/.claude/settings.json` once (backing that file up first). Requires `jq`
+for the hook.
 
 ## Linking a project for Copilot
 
@@ -76,13 +139,16 @@ When you (or an agent) learn a new durable preference or convention:
 
 1. Edit the relevant file in `docs/` (or add a new one, and add it to the
    `ORDER` array in `build.sh`).
-2. Rebuild and push:
+2. Rebuild, review, commit and push (in Claude Code, stage first, then run
+   `/commit-review` — the gate denies `git add … && git commit` in one
+   command and commits without a staged review file):
    ```bash
    cd ~/dotfiles/ai-config
    ./build.sh
    cd ~/dotfiles
    git add ai-config/
-   git commit -m "ai-config: <what changed>"
+   # in Claude Code: /commit-review  → stages docs/reviews/YYYY-MM-DD-<slug>.md
+   git commit -m "docs[ai-config] -- <what changed>"
    git push
    ```
 3. On any other machine, `git pull` picks it up immediately (the symlinks

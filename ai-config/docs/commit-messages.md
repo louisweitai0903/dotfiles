@@ -11,7 +11,7 @@
 7. Review diff.
 8. Update documentation.
 9. Run the fresh-session feature review and write its review file (see
-   `feature-review.md`).
+   `feature-review.md`) — in Claude Code, `/commit-review`.
 10. Commit.
 
 Never commit unnecessary generated files. Only create a checkpoint commit

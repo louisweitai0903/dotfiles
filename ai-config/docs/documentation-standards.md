@@ -83,6 +83,13 @@ Include:
 - Changes made during the current session, especially core functions, architecture, data flows, commands, and important files modified.
 - Clear next steps, including recommended commands, tests, open questions, and risks.
 
+Write one handoff per session at `docs/handoffs/handoff-<title>-YYYY-MM-DD-HHMM.md`
+(in Claude Code, `/handoff <title>` does this). `HANDOFF.md` at the project
+root is then an index: a **Latest** link to the newest handoff, followed by a
+newest-first **History** list. Read the latest handoff before starting work.
+Each handoff ends with a one-line **resume prompt** (absolute project path,
+handoff file, first next step) that can be pasted into a new session.
+
 ## docs/
 
 Every project must contain a docs folder.
