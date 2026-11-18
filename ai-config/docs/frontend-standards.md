@@ -26,8 +26,9 @@
 
 ## Design & interaction
 
-- Make every screen action-led: one obvious, high-contrast primary
-  call-to-action with a clear verb label, placed where the eye lands.
+- Make every screen that has a primary task action-led: one obvious,
+  high-contrast call-to-action with a clear verb label, placed where the
+  eye lands. Don't invent a CTA on read-only or error screens.
   Users should be able to click without having to think.
 - Web applications must work on mobile, tablet and desktop. Check the
   layout at each breakpoint.
@@ -36,7 +37,8 @@
   equivalent), and keep a text label where an icon alone is ambiguous.
 - Any button that waits on the backend shows a loading state and is
   disabled until the response arrives, so repeated clicks can't fire
-  duplicate requests.
+  duplicate requests. On error or timeout, re-enable it and show the
+  error.
 - Use one font family across the app, and one design language (colors,
   radii, shadows, component styles) on every page, unless the user
   explicitly says otherwise.
