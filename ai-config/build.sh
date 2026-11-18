@@ -18,6 +18,7 @@ ORDER=(
   scope-control.md
   implementation-standards.md
   frontend-references.md
+  frontend-standards.md
   database-migrations.md
   dependencies.md
   documentation-standards.md

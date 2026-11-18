@@ -41,3 +41,7 @@ where it can never happen:
   degradation so one failing part doesn't take down the rest.
 - Make the recovery path real: rollback, replay or restart should be
   possible and, where practical, tested.
+- Large production traffic: put slow or bursty work behind Redis or a
+  message queue instead of handling it inline. When Redis or the queue
+  is unavailable, retry with bounded backoff, then fail visibly (or
+  spool the work for replay); never drop it silently.
