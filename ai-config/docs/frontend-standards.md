@@ -23,3 +23,20 @@
 - Handle small variations with props; if variations grow large, prefer
   composition over adding many conditional flags.
 - After moving, update all imports and delete the old copy.
+
+## Design & interaction
+
+- Make every screen action-led: one obvious, high-contrast primary
+  call-to-action with a clear verb label, placed where the eye lands.
+  Users should be able to click without having to think.
+- Web applications must work on mobile, tablet and desktop. Check the
+  layout at each breakpoint.
+- On mobile, prefer icons over text for actions and navigation. Every
+  icon-only control still needs an accessible label (`aria-label` or
+  equivalent), and keep a text label where an icon alone is ambiguous.
+- Any button that waits on the backend shows a loading state and is
+  disabled until the response arrives, so repeated clicks can't fire
+  duplicate requests.
+- Use one font family across the app, and one design language (colors,
+  radii, shadows, component styles) on every page, unless the user
+  explicitly says otherwise.
