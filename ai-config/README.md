@@ -118,6 +118,7 @@ restart Claude Code.
 | `scope-control.md` | Keeping changes to what was actually asked |
 | `implementation-standards.md` | Code quality expectations |
 | `frontend-references.md` | Research design references and wait for a choice before building UI |
+| `frontend-standards.md` | Layout/styling rules and reusing components across pages |
 | `database-migrations.md` | Migration safety rules |
 | `dependencies.md` | Rules for adding/upgrading packages |
 | `documentation-standards.md` | README/STATUS/PROGRESS/HANDOFF/docs conventions |
