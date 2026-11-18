@@ -329,7 +329,8 @@ of researching external references.
 
 - Make every screen that has a primary task action-led: one obvious,
   high-contrast call-to-action with a clear verb label, placed where the
-  eye lands. Don't invent a CTA on read-only or error screens.
+  eye lands. Don't invent a CTA on read-only screens; on error screens
+  the CTA is the recovery action (Retry / Go back).
   Users should be able to click without having to think.
 - Web applications must work on mobile, tablet and desktop. Check the
   layout at each breakpoint.
