@@ -1,79 +1,80 @@
-# Review: Add frontend layout/styling and component reuse rules (with spacing fallback) to ai-config
+# Review: Add frontend standards (layout, component reuse, design & interaction) and queue-with-retry rule to ai-config
 
 - **Date:** 2026-11-18
-- **Branch:** docs/frontend-standards (HEAD 6a8858e, base main)
+- **Branch:** docs/frontend-standards (HEAD aa2add5, base main)
 - **Verdict:** PASS
 
 ## Summary
-This branch adds a new rule file, `ai-config/docs/frontend-standards.md`, with the two sections the user asked for:
-- **Layout & styling:** align elements with layout primitives instead of nudging them with padding or margins; take spacing only from the design tokens or spacing scale; prefer relative or fluid sizing.
-- **Component reuse:** extract a shared component instead of duplicating it; turn page-specific dependencies into props; use props for small variations and composition for large ones; update imports and delete the old copy.
+This branch adds a new agent-rules file, `ai-config/docs/frontend-standards.md`, with three sections:
+- **Layout & styling:** align with layout primitives rather than nudging with padding or margins; take spacing only from tokens, falling back to the framework's scale and then to a small `--space-*` rem scale; prefer relative or fluid sizing.
+- **Component reuse:** extract and share components; page-specific dependencies become props; props for small variations and composition for large ones; update imports and delete the old copy.
+- **Design & interaction:** action-led screens with one clear CTA; mobile, tablet and desktop support; icons on mobile, with accessible labels; loading and disabled state on buttons waiting for the backend; one font and one design language.
 
-A follow-up commit adds the fallback the user asked for. When a project has no spacing scale, the agent uses the framework's default scale. With no framework either, it defines a small set of `--space-*` CSS custom properties in rem once and uses only those.
-
-The file is in `build.sh` ORDER right after `frontend-references.md` and listed in the README docs table. `AGENTS.md` is rebuilt to match.
+It also adds a "Large production traffic" bullet to the "Design for failure" section of `implementation-standards.md`. That bullet calls for Redis or a queue, bounded retry with backoff when they are unavailable, then a visible failure or spooling, and never a silent drop. The new file is registered in `build.sh` ORDER and the README docs table, and `AGENTS.md` is regenerated. Together this covers all three user requests.
 
 ## Files changed
-- [ai-config/docs/frontend-standards.md:1](../../ai-config/docs/frontend-standards.md#L1): new source file with both rule sections. The spacing fallback is at [lines 10-13](../../ai-config/docs/frontend-standards.md#L10).
-- [ai-config/build.sh:21](../../ai-config/build.sh#L21): `frontend-standards.md` added to `ORDER`.
-- [ai-config/AGENTS.md:298](../../ai-config/AGENTS.md#L298): the rebuilt output now includes the "Frontend Standards" section.
-- [ai-config/README.md:121](../../ai-config/README.md#L121): new row in the docs table.
-- [docs/reviews/2026-11-18-frontend-standards.md](2026-11-18-frontend-standards.md): this review file. It replaces the earlier review, which was written at 555d2b6 before the fallback commit.
+- [ai-config/docs/frontend-standards.md:1](../../ai-config/docs/frontend-standards.md#L1): new file with the Layout & styling, Component reuse, and Design & interaction sections.
+- [ai-config/docs/implementation-standards.md:44](../../ai-config/docs/implementation-standards.md#L44): new "Large production traffic" bullet (queue/Redis with bounded retry, visible failure or spool).
+- [ai-config/build.sh:21](../../ai-config/build.sh#L21): `frontend-standards.md` added to ORDER after `frontend-references.md`.
+- [ai-config/README.md:121](../../ai-config/README.md#L121): docs table row for `frontend-standards.md`.
+- [ai-config/AGENTS.md:302](../../ai-config/AGENTS.md#L302): regenerated output, which includes both additions.
+- [docs/reviews/2026-11-18-frontend-standards.md](2026-11-18-frontend-standards.md): this review file. It replaces the stale review that was written at 6a8858e.
 
 ## What was fixed
-None. This branch adds rules and fixes no bug. The fallback commit (6a8858e) closes the gap the earlier review raised, where projects without a spacing scale got no guidance. That gap was in prose, so there is no regression test to write.
+None. The branch adds documentation and rules only and changes no behavior.
 
 ## Coverage
 | Scenario / flow | Handled by | Proven by |
 |---|---|---|
-| Use layout primitives to align, not padding/margin nudges | [frontend-standards.md:5](../../ai-config/docs/frontend-standards.md#L5) | manual: matches the user's wording |
-| Spacing only from the scale or design tokens; no arbitrary px | [frontend-standards.md:8](../../ai-config/docs/frontend-standards.md#L8) | manual |
-| Fallback: no project scale → framework default scale | [frontend-standards.md:10](../../ai-config/docs/frontend-standards.md#L10) | manual |
-| Fallback: no framework → define `--space-*` custom properties once | [frontend-standards.md:11](../../ai-config/docs/frontend-standards.md#L11) | manual |
-| Prefer relative or fluid sizing | [frontend-standards.md:14](../../ai-config/docs/frontend-standards.md#L14) | manual |
-| Extract shared components instead of duplicating | [frontend-standards.md:19](../../ai-config/docs/frontend-standards.md#L19) | manual |
-| Page-specific dependencies become props | [frontend-standards.md:21](../../ai-config/docs/frontend-standards.md#L21) | manual |
-| Props for small variations, composition for large | [frontend-standards.md:23](../../ai-config/docs/frontend-standards.md#L23) | manual |
-| Update imports and delete the old copy | [frontend-standards.md:25](../../ai-config/docs/frontend-standards.md#L25) | manual |
-| Committed `AGENTS.md` matches the `build.sh` output | [build.sh:21](../../ai-config/build.sh#L21) | rebuilt from `git archive HEAD` in the scratchpad and diffed: identical |
-| Every file in docs/ is in ORDER | [build.sh:11](../../ai-config/build.sh#L11) | `ls docs` diffed against the ORDER list: identical (24) |
+| Request 1: layout primitives, token spacing, fluid sizing | [frontend-standards.md:3](../../ai-config/docs/frontend-standards.md#L3) | manual read against the request |
+| Request 1: component reuse rules (extract, props, composition, delete old copy) | [frontend-standards.md:17](../../ai-config/docs/frontend-standards.md#L17) | manual read |
+| Request 2: fallback when there is no spacing scale | [frontend-standards.md:10](../../ai-config/docs/frontend-standards.md#L10) | manual read |
+| Request 3: CTA-heavy design | [frontend-standards.md:29](../../ai-config/docs/frontend-standards.md#L29) | manual read |
+| Request 3: mobile, tablet and desktop | [frontend-standards.md:35](../../ai-config/docs/frontend-standards.md#L35) | manual read |
+| Request 3: icons over text on mobile | [frontend-standards.md:37](../../ai-config/docs/frontend-standards.md#L37) | manual read |
+| Request 3: Redis or queue with retry when it is down | [implementation-standards.md:44](../../ai-config/docs/implementation-standards.md#L44) | manual read |
+| Request 3: loading state on buttons, no duplicate submits | [frontend-standards.md:40](../../ai-config/docs/frontend-standards.md#L40) | manual read |
+| Request 3: same font and design language unless told otherwise | [frontend-standards.md:44](../../ai-config/docs/frontend-standards.md#L44) | manual read |
+| Committed AGENTS.md matches `build.sh` output | [build.sh](../../ai-config/build.sh) | rebuilt in a scratch copy; output identical to the committed file |
+| Every file in docs/ is listed in ORDER | [build.sh:11](../../ai-config/build.sh#L11) | diffed `ls docs` against ORDER; they match |
 
 ## Edge cases
 | Edge case | How it's handled | Tested? |
 |---|---|---|
-| Project has no spacing scale or tokens | Two-level fallback: the framework's default scale, then custom properties defined once | n/a (prose) |
-| `margin-inline: auto` looks like it breaks the "no margins for alignment" rule | Named explicitly as an allowed layout primitive | n/a |
-| Tailwind arbitrary values (`p-[13px]`) | Covered by "No arbitrary pixel values" | n/a |
-| Defining a new spacing scale vs scope-control ("no speculative changes") | Only when no scale exists and spacing is needed, and done "once", so the scale stays minimal | n/a |
-| Reuse rule vs scope-control ("don't reorganize unrelated files") | Applies only when the component is needed elsewhere, which makes the move part of the task. Matches "apply once real reuse exists" in implementation-standards | n/a |
-| Non-CSS UIs (React Native, Flutter, SwiftUI): no CSS custom properties or rem | Not handled explicitly. The examples are web-only, though the "framework default scale" level still applies | n/a. See finding 1 |
+| Project has no spacing scale | Use the framework's default scale; with no framework, define a `--space-*` rem scale once | n/a (prose rule) |
+| Read-only screens under the "always CTA-heavy" request | Deliberately narrowed: no invented CTA on read-only screens, and error screens get a recovery CTA. This is a reasonable reading of the user's "always" | n/a |
+| Icon-only controls (accessibility) | `aria-label` is required, and a text label is kept where the icon is ambiguous | n/a |
+| Backend error or timeout on a loading button | The button is re-enabled and the error is shown | n/a |
+| Redis or queue down | Bounded retry with backoff, then a visible failure or spooling for replay; never a silent drop | n/a |
+| User explicitly asks for a different font or style | The "unless the user explicitly says otherwise" exception applies | n/a |
 
 ## Not tested
-- **Agent behavior under the new rules.** These are prose instructions with no automated harness. That is acceptable for a personal agent-config repo.
+- **How agents behave under the new rules.** These are prose instructions, and there is no harness for checking agent compliance. That is acceptable for a personal config repo.
 
 ## Production rollout & downtime
-Not a live product. These are personal dotfiles. `AGENTS.md` is symlinked into agent configs (`~/.claude/CLAUDE.md`, and per-project `.github/copilot-instructions.md` through `link-copilot.sh`), so the rules apply as soon as the file on disk changes. Rollback is a revert. No rebuild is needed because `AGENTS.md` is committed.
+Not a live product. Note that `~/.claude/CLAUDE.md` is a symlink to `ai-config/AGENTS.md` in this working tree, so the rules apply to new sessions as soon as this branch is checked out, before merge. To roll back, check out main or revert.
 
 ## Checklist
 ### Done
-- [x] "Layout & styling" section added, faithful to the request
-- [x] "Component reuse" section added, faithful to the request
-- [x] Spacing-scale fallback added (second request)
-- [x] Source file in `docs/`, registered in `build.sh` ORDER
-- [x] `AGENTS.md` regenerated and byte-identical to the build output
+- [x] Layout & styling rules (request 1)
+- [x] Component reuse rules (request 1)
+- [x] Spacing-scale fallback (request 2)
+- [x] CTA, responsive, mobile icons, loading buttons, font and design-language rules (request 3)
+- [x] Redis/queue with retry-on-outage rule (request 3)
+- [x] Source edited in `docs/*.md`, and `AGENTS.md` regenerated so it matches `build.sh` output exactly
 - [x] README docs table updated
 ### Not done
-- [ ] STATUS.md / PROGRESS.md updates. OK for this PR because neither file exists in this repo.
+- [ ] STATUS.md / PROGRESS.md: OK for this PR because the repo has neither file, and adding them is out of scope.
 
 ## Findings
-1. **[non-blocking] The fallback and sizing examples are web-only.** If an agent works on a React Native or Flutter project with no spacing scale, the last fallback level (CSS custom properties in rem) and the rem/fr/clamp sizing guidance don't apply. The agent might then invent ad-hoc numbers. Optional fix: generalise the last level to something like "define a small spacing scale once as constants/tokens in the project (e.g. CSS custom properties `--space-1`… in rem for web)".
+1. **[non-blocking] The loading-button rule treats disabling the button as duplicate protection.** The rule at [frontend-standards.md:40](../../ai-config/docs/frontend-standards.md#L40) says repeated clicks "can't fire duplicate requests", but disabling only covers one button in one tab. Failure scenario: a user submits a claim or payment form, the network times out, and the rule re-enables the button. The user then clicks again (or submits from a second tab) while the first request did reach the server, so two records are created. "Design for failure" already mentions idempotent operations in general. Suggested fix: add "and make the backend endpoint idempotent (e.g. an idempotency key) for writes" to this bullet. A related minor point: prefer `aria-disabled` plus a guard over the `disabled` attribute, so screen-reader focus isn't lost.
 
 ## Tests & checks run
-- Extracted `ai-config` from `git archive HEAD` into the scratchpad, ran `bash build.sh` (output: "Built … from 24 docs."), and diffed the result against `git show HEAD:ai-config/AGENTS.md`. Result: identical.
-- Diffed the `ls ai-config/docs` listing against the `.md` entries in `build.sh` ORDER. Result: identical. Every doc is included.
-- `git grep frontend-references`: only `README.md` and `build.sh` list the docs files, and both are updated.
-- No test suite or linter exists for `ai-config`.
+- `git archive HEAD ai-config | tar -x` into the scratchpad, then `bash build.sh` there and `diff` against the committed `ai-config/AGENTS.md`: IDENTICAL.
+- `ls ai-config/docs` compared with the `build.sh` ORDER entries: all 24 files are listed, none missing.
+- `bash -n ai-config/build.sh`: syntax OK.
+- shellcheck: not installed, so not run.
 
 ## Risks & follow-ups
-- The new rules take effect in every agent session straight away through the symlinked `AGENTS.md`, before and regardless of merge, because the working-tree file is what gets read.
-- Web-only examples in the fallback (finding 1). This is an optional wording tweak.
+- The rules go live for every agent session as soon as this branch is checked out, because of the symlink.
+- Optional: add the idempotency clause to the loading-button rule (Finding 1).
