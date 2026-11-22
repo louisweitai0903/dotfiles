@@ -124,7 +124,7 @@ restart Claude Code.
 | `documentation-standards.md` | README/STATUS/PROGRESS/HANDOFF/docs conventions |
 | `feature-review.md` | Fresh-session review of the whole branch + review file required before the draft PR |
 | `commit-messages.md` | Git workflow: feature branches, Conventional Commits, push and draft PR rules |
-| `code-review.md` | Review checklist, for others' code and self-review |
+| `code-review.md` | Review checklist (incl. failure handling and screen sizes), for others' code and self-review |
 | `security-review.md` | Security checklist (injection, authz, secrets, etc) |
 | `debugging.md` | Systematic bug reproduction and root-causing |
 | `linting.md` | Linting/type-checking expectations per language |
